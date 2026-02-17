@@ -19,9 +19,7 @@
 #include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
 
-char *tzargentina = "America/Buenos_Aires";
-char *tzutc = "UTC";
-char *tzberlin = "Europe/Berlin";
+char *tzcairo = "Africa/Cairo";
 
 static Display *dpy;
 
