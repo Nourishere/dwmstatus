@@ -1,6 +1,7 @@
 /*
  * Copy me if you can.
  * by 20h
+ * Further modifications by Nour Nawar <nerdyforsciences@gmail.com>
  */
 
 #define _BSD_SOURCE
