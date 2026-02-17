@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 
 #include <X11/Xlib.h>
+#include <alsa/asoundlib.h>
 
 char *tzargentina = "America/Buenos_Aires";
 char *tzutc = "UTC";
@@ -176,6 +177,138 @@ gettemperature(char *base, char *sensor)
 	if (co == NULL)
 		return smprintf("");
 	return smprintf("%02.0f°C", atof(co) / 1000);
+}
+
+char*
+getnetwork(char *base)
+{
+    char *co = readfile(base, "operstate");
+    if (!co)
+        return smprintf("?");
+    for (int i = 0; co[i]; i++) {
+        if (co[i] == '\n') co[i] = '\0';
+    }
+    return smprintf("%s", co);
+}
+
+char*
+getbright(char *base)
+{
+	int max;
+	int current;
+    char *co = readfile(base, "max_brightness");
+    if (co == NULL){
+        return smprintf("?");
+	}
+	sscanf(co, "%d", &max);
+    co = readfile(base, "brightness");
+    if (co == NULL){
+        return smprintf("?");
+	}
+	sscanf(co, "%d", &current);
+
+	return smprintf("%.0f%%", ((float)current / (float)max) * 100);
+}
+
+char *
+getcpu(void) {
+    FILE *fp;
+    unsigned long long int user1, nice1, system1, idle1, iowait1, irq1, softirq1, steal1;
+    unsigned long long int user2, nice2, system2, idle2, iowait2, irq2, softirq2, steal2;
+    unsigned long long int total1, total2, total_diff, idle_diff;
+    int usage = 0;
+
+    // read first snapshot
+    fp = fopen("/proc/stat", "r");
+    if (!fp) return smprintf("?");
+    fscanf(fp, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",
+           &user1, &nice1, &system1, &idle1, &iowait1, &irq1, &softirq1, &steal1);
+    fclose(fp);
+
+	// sleep 100 ms
+    usleep(100000);
+
+    // read second snapshot
+    fp = fopen("/proc/stat", "r");
+    if (!fp) return smprintf("?");
+    fscanf(fp, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",
+           &user2, &nice2, &system2, &idle2, &iowait2, &irq2, &softirq2, &steal2);
+    fclose(fp);
+
+    total1 = user1 + nice1 + system1 + idle1 + iowait1 + irq1 + softirq1 + steal1;
+    total2 = user2 + nice2 + system2 + idle2 + iowait2 + irq2 + softirq2 + steal2;
+
+    total_diff = total2 - total1;
+    idle_diff  = (idle2 + iowait2) - (idle1 + iowait1);
+
+    if (total_diff == 0) return smprintf("?");
+
+    usage = (int)((total_diff - idle_diff) * 100 / total_diff);
+
+	return smprintf("%.0f%%", (float)usage);
+}
+
+// Use mic for sink
+// Use speaker for source
+char *
+getsound(const char *device)
+{
+    snd_mixer_t *mixer = NULL;
+    snd_mixer_selem_id_t *sid = NULL;
+    snd_mixer_elem_t *elem = NULL;
+    long minv, maxv, value;
+    int muted = 0;
+    int mic = 0;
+    const char *selem_name = NULL;
+
+    if (strcmp(device, "mic") == 0) {
+        selem_name = "Capture";
+        mic = 1;
+    } else if (strcmp(device, "speaker") == 0) {
+        selem_name = "Master";
+    } else {
+        return smprintf("?");
+    }
+
+    if (snd_mixer_open(&mixer, 0) < 0)
+        return smprintf("?");
+    if (snd_mixer_attach(mixer, "default") < 0)
+        return smprintf("?");
+
+    snd_mixer_selem_register(mixer, NULL, NULL);
+    snd_mixer_load(mixer);
+
+    snd_mixer_selem_id_malloc(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+
+    elem = snd_mixer_find_selem(mixer, sid);
+    if (!elem) {
+        snd_mixer_selem_id_free(sid);
+        snd_mixer_close(mixer);
+        return smprintf("?");
+    }
+    if (mic) {
+        snd_mixer_selem_get_capture_volume_range(elem, &minv, &maxv);
+        snd_mixer_selem_get_capture_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &value);
+        snd_mixer_selem_get_capture_switch(elem, SND_MIXER_SCHN_FRONT_LEFT, &muted);
+        muted = !muted;
+    } else {
+        snd_mixer_selem_get_playback_volume_range(elem, &minv, &maxv);
+        snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &value);
+        snd_mixer_selem_get_playback_switch(elem, SND_MIXER_SCHN_FRONT_LEFT, &muted);
+        muted = !muted;
+    }
+
+    // cleanup
+    snd_mixer_selem_id_free(sid);
+    snd_mixer_close(mixer);
+
+    if (muted)
+        return smprintf("MUTE");
+
+    int pct = (int)((value - minv) * 100 / (maxv - minv));
+    return smprintf("%d%%", pct);
 }
 
 char *
