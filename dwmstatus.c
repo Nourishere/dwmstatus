@@ -347,21 +347,22 @@ main(void)
 		return 1;
 	}
 
-	for (;;sleep(30)) {
-		avgs = loadavg();
-		bat = getbattery("/sys/class/power_supply/BAT0");
-		tmar = mktimes("%H:%M", tzargentina);
-		tmutc = mktimes("%H:%M", tzutc);
-		tmbln = mktimes("KW %W %a %d %b %H:%M %Z %Y", tzberlin);
+	// Update every second
+	for (;;sleep(1)) {
+		// very not portable code!
+		bat = getbattery("/sys/class/power_supply/BAT1");
+		tmcairo= mktimes("%a %d %b %H:%M:%S %Y", tzcairo);
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
-		surfs = execscript("surf-status");
-		memes = execscript("meme-status");
-		t0 = gettemperature("/sys/devices/virtual/thermal/thermal_zone0", "temp");
 		t1 = gettemperature("/sys/devices/virtual/thermal/thermal_zone1", "temp");
+		eth = getnetwork("/sys/class/net/enp8s0");
+		wlan = getnetwork("/sys/class/net/wlp9s0");
+		cpu = getcpu();
+		vol = getsound("speaker");
+		mic = getsound("mic");
+		bright = getbright("/sys/class/backlight/nvidia_wmi_ec_backlight");
 
-		status = smprintf("S:%s M:%s K:%s T:%s|%s L:%s B:%s A:%s U:%s %s",
-				surfs, memes, kbmap, t0, t1, avgs, bat, tmar, tmutc,
-				tmbln);
+		status = smprintf("K:%s | CPU:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s",
+				kbmap, cpu, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
 		setstatus(status);
 
 		free(status);
