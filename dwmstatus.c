@@ -331,16 +331,16 @@ int
 main(void)
 {
 	char *status;
-	char *avgs;
 	char *bat;
-	char *tmar;
-	char *tmutc;
-	char *tmbln;
-	char *t0;
+	char *tmcairo;
 	char *t1;
 	char *kbmap;
-	char *surfs;
-	char *memes;
+	char *wlan;
+	char *eth;
+	char *cpu;
+	char *vol;
+	char *mic;
+	char *bright;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -364,17 +364,17 @@ main(void)
 				tmbln);
 		setstatus(status);
 
-		free(surfs);
-		free(memes);
-		free(kbmap);
-		free(t0);
-		free(t1);
-		free(avgs);
-		free(bat);
-		free(tmar);
-		free(tmutc);
-		free(tmbln);
 		free(status);
+		free(bat);
+		free(tmcairo);
+		free(t1);
+		free(kbmap);
+		free(wlan);
+		free(eth);
+		free(cpu);
+		free(vol);
+		free(mic);
+		free(bright);
 	}
 
 	XCloseDisplay(dpy);
