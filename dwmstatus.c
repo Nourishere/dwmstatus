@@ -133,21 +133,15 @@ getbattery(char *base)
 	}
 	free(co);
 
-	co = readfile(base, "charge_full_design");
-	if (co == NULL) {
-		co = readfile(base, "energy_full_design");
-		if (co == NULL)
-			return smprintf("");
-	}
+	co = readfile(base, "energy_full_design");
+	if (co == NULL)
+		return smprintf("");
 	sscanf(co, "%d", &descap);
 	free(co);
 
-	co = readfile(base, "charge_now");
-	if (co == NULL) {
-		co = readfile(base, "energy_now");
-		if (co == NULL)
-			return smprintf("");
-	}
+	co = readfile(base, "energy_now");
+	if (co == NULL)
+		return smprintf("");
 	sscanf(co, "%d", &remcap);
 	free(co);
 
@@ -156,9 +150,12 @@ getbattery(char *base)
 		status = '-';
 	} else if(!strncmp(co, "Charging", 8)) {
 		status = '+';
-	} else {
+	} else if(!strncmp(co, "Not charging", 12)) {
+		status = '=';
+	}else {
 		status = '?';
 	}
+
 
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
