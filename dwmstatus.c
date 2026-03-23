@@ -292,21 +292,28 @@ getwired(void)
 }
 
 char*
-getbright(char *base)
+getbright(void)
 {
 	int max;
 	int current;
-    char *co = readfile(base, "max_brightness");
+	char* base = "/sys/class/backlight/";
+	char* full_base = get_that_one_subdir((const char*) base);
+    char *co = readfile(full_base, "max_brightness");
     if (co == NULL){
+		free(full_base);
         return smprintf("?");
 	}
 	sscanf(co, "%d", &max);
-    co = readfile(base, "brightness");
+	free(co);
+    co = readfile(full_base, "brightness");
     if (co == NULL){
+		free(full_base);
         return smprintf("?");
 	}
 	sscanf(co, "%d", &current);
 
+	free(full_base);
+	free(co);
 	return smprintf("%.0f%%", ((float)current / (float)max) * 100);
 }
 
