@@ -242,11 +242,15 @@ char *
 gettemperature(char *base, char *sensor)
 {
 	char *co;
+	char *ret;
 
 	co = readfile(base, sensor);
 	if (co == NULL)
 		return smprintf("");
-	return smprintf("%02.0f°C", atof(co) / 1000);
+
+	ret = smprintf("%02.0f°C", atof(co) / 1000);
+	free(co);
+	return ret;
 }
 
 char*
