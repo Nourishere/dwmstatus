@@ -25,6 +25,71 @@ char *tzcairo = "Africa/Cairo";
 
 static Display *dpy;
 
+// simple prefix matcher
+char*
+guess(const char *path_prefix)
+{
+    char dir[512];
+    char prefix[256];
+
+    // Split into directory + prefix
+    const char *last_slash = strrchr(path_prefix, '/');
+    if (!last_slash)
+		return NULL;
+
+    size_t dir_len = last_slash - path_prefix;
+    strncpy(dir, path_prefix, dir_len);
+    dir[dir_len] = '\0';
+    strcpy(prefix, last_slash + 1);
+
+    DIR *d = opendir(dir);
+    if (!d)
+		return NULL;
+
+    struct dirent *entry;
+    while ((entry = readdir(d)) != NULL) {
+        if (strncmp(entry->d_name, prefix, strlen(prefix)) == 0) {
+            // allocate enough space for dir + "/" + filename + '\0'
+            size_t path_len = strlen(dir) + 1 + strlen(entry->d_name) + 1;
+            char *full_path = malloc(path_len);
+            if (!full_path) {
+                closedir(d);
+                return NULL;
+            }
+            snprintf(full_path, path_len, "%s/%s", dir, entry->d_name);
+            closedir(d);
+            return full_path;  // caller must free
+        }
+    }
+    closedir(d);
+    return NULL;
+}
+
+// get the only one subdirectory under a base directory
+char*
+get_that_one_subdir(const char* base)
+{
+	DIR *d = opendir(base);
+	if(d == NULL)
+		return NULL;
+	struct dirent* entry;
+	while((entry = readdir(d)) != NULL){
+		if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+			continue;
+		char path[512];
+		snprintf(path, sizeof(path), "%s/%s", base, entry->d_name);
+
+	struct stat st;
+	stat(path, &st);
+	if(S_ISDIR(st.st_mode)){
+		closedir(d);
+		return strdup(path);
+	}
+}
+	closedir(d);
+	return NULL;
+}
+
 char *
 smprintf(char *fmt, ...)
 {
