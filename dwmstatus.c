@@ -466,18 +466,17 @@ main(void)
 	// Update every second
 	for (;;sleep(1)) {
 		// very not portable code!
-		bat = getbattery("/sys/class/power_supply/BAT1");
+		bat = getbattery();
 		tmcairo= mktimes("%a %d %b %H:%M:%S %Y", tzcairo);
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
 		t1 = gettemperature("/sys/class/hwmon/hwmon6", "temp1_input");
 
-
-		eth = getnetwork("/sys/class/net/enp8s0");
-		wlan = getnetwork("/sys/class/net/wlp9s0");
+		eth = getwired();
+		wlan = getwlan();
 		cpu = getcpu();
 		vol = getsound("speaker");
 		mic = getsound("mic");
-		bright = getbright("/sys/class/backlight/nvidia_wmi_ec_backlight");
+		bright = getbright();
 
 		status = smprintf("K:%s | CPU:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s",
 				kbmap, cpu, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
