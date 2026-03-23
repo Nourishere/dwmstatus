@@ -183,36 +183,44 @@ readfile(char *base, char *file)
 }
 
 char *
-getbattery(char *base)
+getbattery(void)
 {
 	char *co, status;
-	int descap, remcap;
+	int descap = -1;
+	int remcap = -1;
+	char* path;
 
-	descap = -1;
-	remcap = -1;
-
-	co = readfile(base, "present");
-	if (co == NULL)
+	path = guess("/sys/class/power_supply/BAT");
+	if(path == NULL)
 		return smprintf("");
+	co = readfile(path, "present");
+	if (co == NULL){
+		free(path);
+		return smprintf("");
+	}
 	if (co[0] != '1') {
 		free(co);
 		return smprintf("not present");
 	}
 	free(co);
 
-	co = readfile(base, "energy_full_design");
-	if (co == NULL)
+	co = readfile(path, "energy_full_design");
+	if (co == NULL){
+		free(path);
 		return smprintf("");
+	}
 	sscanf(co, "%d", &descap);
 	free(co);
 
-	co = readfile(base, "energy_now");
-	if (co == NULL)
+	co = readfile(path, "energy_now");
+	if (co == NULL){
+		free(path);
 		return smprintf("");
+	}
 	sscanf(co, "%d", &remcap);
 	free(co);
 
-	co = readfile(base, "status");
+	co = readfile(path, "status");
 	if (!strncmp(co, "Discharging", 11)) {
 		status = '-';
 	} else if(!strncmp(co, "Charging", 8)) {
@@ -222,11 +230,11 @@ getbattery(char *base)
 	}else {
 		status = '?';
 	}
-
+	free(co);
+	free(path);
 
 	if (remcap < 0 || descap < 0)
 		return smprintf("invalid");
-
 	return smprintf("%.0f%%%c", ((float)remcap / (float)descap) * 100, status);
 }
 
