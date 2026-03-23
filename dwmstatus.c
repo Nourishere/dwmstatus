@@ -254,15 +254,41 @@ gettemperature(char *base, char *sensor)
 }
 
 char*
-getnetwork(char *base)
+getwlan(void)
 {
-    char *co = readfile(base, "operstate");
-    if (!co)
+	char* guessed = guess("/sys/class/net/wlp");
+    char *co = readfile(guessed, "operstate");
+	char *ret;
+    if (co == NULL){
+		free(guessed);
         return smprintf("?");
+	}
     for (int i = 0; co[i]; i++) {
         if (co[i] == '\n') co[i] = '\0';
     }
-    return smprintf("%s", co);
+    ret = smprintf("%s", co);
+	free(guessed);
+	free(co);
+	return ret;
+}
+
+char*
+getwired(void)
+{
+	char* guessed = guess("/sys/class/net/enp");
+    char *co = readfile(guessed, "operstate");
+	char* ret;
+    if (co == NULL){
+		free(guessed);
+        return smprintf("?");
+	}
+    for (int i = 0; co[i]; i++) {
+        if (co[i] == '\n') co[i] = '\0';
+    }
+    ret = smprintf("%s", co);
+	free(guessed);
+	free(co);
+	return ret;
 }
 
 char*
