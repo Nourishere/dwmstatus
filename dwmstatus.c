@@ -318,7 +318,8 @@ getbright(void)
 }
 
 char *
-getcpu(void) {
+getcpu(void)
+{
     FILE *fp;
     unsigned long long int user1, nice1, system1, idle1, iowait1, irq1, softirq1, steal1;
     unsigned long long int user2, nice2, system2, idle2, iowait2, irq2, softirq2, steal2;
@@ -326,8 +327,9 @@ getcpu(void) {
     int usage = 0;
 
     // read first snapshot
-    fp = fopen("/proc/stat", "r");
-    if (!fp) return smprintf("?");
+    fp = fopen("/proc/stat","r");
+    if (!fp)
+		return smprintf("?");
     fscanf(fp, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",
            &user1, &nice1, &system1, &idle1, &iowait1, &irq1, &softirq1, &steal1);
     fclose(fp);
@@ -337,7 +339,8 @@ getcpu(void) {
 
     // read second snapshot
     fp = fopen("/proc/stat", "r");
-    if (!fp) return smprintf("?");
+    if (!fp)
+		return smprintf("?");
     fscanf(fp, "cpu %llu %llu %llu %llu %llu %llu %llu %llu",
            &user2, &nice2, &system2, &idle2, &iowait2, &irq2, &softirq2, &steal2);
     fclose(fp);
@@ -348,7 +351,8 @@ getcpu(void) {
     total_diff = total2 - total1;
     idle_diff  = (idle2 + iowait2) - (idle1 + iowait1);
 
-    if (total_diff == 0) return smprintf("?");
+    if (total_diff == 0)
+		return smprintf("?");
 
     usage = (int)((total_diff - idle_diff) * 100 / total_diff);
 
