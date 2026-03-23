@@ -353,7 +353,9 @@ main(void)
 		bat = getbattery("/sys/class/power_supply/BAT1");
 		tmcairo= mktimes("%a %d %b %H:%M:%S %Y", tzcairo);
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
-		t1 = gettemperature("/sys/devices/virtual/thermal/thermal_zone1", "temp");
+		t1 = gettemperature("/sys/class/hwmon/hwmon6", "temp1_input");
+
+
 		eth = getnetwork("/sys/class/net/enp8s0");
 		wlan = getnetwork("/sys/class/net/wlp9s0");
 		cpu = getcpu();
