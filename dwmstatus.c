@@ -11,10 +11,12 @@
 #include <stdarg.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/time.h>
+#include <dirent.h>
 #include <time.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
