@@ -183,6 +183,25 @@ readfile(char *base, char *file)
 }
 
 char *
+getmem(void)
+{
+	long total, available;
+	long used;
+	const char* path = "/proc/meminfo";
+	char line[64];
+	FILE* fd;
+	fd = fopen(path, "r");
+	while(fgets(line, sizeof(line), fd)){
+		if(sscanf(line,"MemTotal: %ld kB", &total)== 1)
+			continue;
+		if(sscanf(line,"MemAvailable: %ld kB", &available)== 1)
+			break;
+	}
+	fclose(fd);
+	used = total - available;
+	return smprintf("%0.2f GiB", (float)(used)/(1024.0 * 1024.0));
+}
+char *
 getbattery(void)
 {
 	char *co, status;
@@ -457,6 +476,7 @@ main(void)
 	char *vol;
 	char *mic;
 	char *bright;
+	char *mem;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -477,9 +497,10 @@ main(void)
 		vol = getsound("speaker");
 		mic = getsound("mic");
 		bright = getbright();
+		mem = getmem();
 
-		status = smprintf("K:%s | CPU:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s",
-				kbmap, cpu, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
+		status = smprintf("K:%s | CPU:%s | U:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s",
+				kbmap, cpu, mem, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
 		setstatus(status);
 
 		free(status);
@@ -493,6 +514,7 @@ main(void)
 		free(vol);
 		free(mic);
 		free(bright);
+		free(mem);
 	}
 
 	XCloseDisplay(dpy);
