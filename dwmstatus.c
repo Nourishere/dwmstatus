@@ -271,6 +271,42 @@ gettemperature(char *base, char *sensor)
 	free(co);
 	return ret;
 }
+char*
+getrxtxstats(char* path)
+{
+	double rx_bytes, tx_bytes;
+	char* rxo, *txo, *ret;
+	char* rx_buff = readfile(path, "statistics/rx_bytes");
+	char* tx_buff = readfile(path, "statistics/tx_bytes");
+	if(!rx_buff || !tx_buff){
+		free(rx_buff); free(tx_buff);
+		return smprintf("?");
+	}
+	sscanf(rx_buff, "%lf", &rx_bytes);
+	sscanf(tx_buff, "%lf", &tx_bytes);
+	if(rx_bytes >= 1024 * 1024 * 1024)
+		rxo = smprintf("%1.2fG↓", rx_bytes / (1024.0 * 1024.0 * 1024.0));
+	else if(rx_bytes >= 1024 * 1024)
+		rxo = smprintf("%1.2fM↓", rx_bytes / (1024.0 * 1024.0));
+	else if(rx_bytes >= 1024)
+		rxo = smprintf("%1.2fK↓", rx_bytes / 1024.0);
+	else
+		rxo = smprintf("%1.2fB↓", rx_bytes);
+
+	if(tx_bytes >= 1024 * 1024 * 1024)
+		txo = smprintf("%1.2fG↑", tx_bytes / (1024.0 * 1024.0 * 1024.0));
+	else if(tx_bytes >= 1024 * 1024)
+		txo = smprintf("%1.2fM↑", tx_bytes / (1024.0 * 1024.0));
+	else if(tx_bytes >= 1024)
+		txo = smprintf("%1.2fK↑", tx_bytes / 1024.0);
+	else
+		txo = smprintf("%1.2lfB↑", tx_bytes);
+
+    ret = smprintf("%s/%s", rxo, txo);
+	free(tx_buff); free(rx_buff);
+	free(rxo); free(txo);
+	return ret;
+}
 
 char*
 getwlan(void)
@@ -285,7 +321,12 @@ getwlan(void)
     for (int i = 0; co[i]; i++) {
         if (co[i] == '\n') co[i] = '\0';
     }
-    ret = smprintf("%s", co);
+	if(strncmp(co, "up",2) == 0){
+		ret = getrxtxstats(guessed);
+	}
+	else{
+		ret = smprintf("%s", co);
+	}
 	free(guessed);
 	free(co);
 	return ret;
@@ -304,7 +345,12 @@ getwired(void)
     for (int i = 0; co[i]; i++) {
         if (co[i] == '\n') co[i] = '\0';
     }
-    ret = smprintf("%s", co);
+	if(strncmp(co, "up",2) == 0){
+		ret = getrxtxstats("guessed");
+	}
+	else{
+		ret = smprintf("%s", co);
+	}
 	free(guessed);
 	free(co);
 	return ret;
