@@ -346,7 +346,7 @@ getwired(void)
         if (co[i] == '\n') co[i] = '\0';
     }
 	if(strncmp(co, "up",2) == 0){
-		ret = getrxtxstats("guessed");
+		ret = getrxtxstats(guessed);
 	}
 	else{
 		ret = smprintf("%s", co);
