@@ -545,7 +545,7 @@ main(void)
 		bright = getbright();
 		mem = getmem();
 
-		status = smprintf("K:%s | CPU:%s | U:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
+		status = smprintf("NN | K:%s | CPU:%s | U:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
 				kbmap, cpu, mem, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
 		setstatus(status);
 
