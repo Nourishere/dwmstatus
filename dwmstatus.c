@@ -355,7 +355,7 @@ getwired(void)
 	free(co);
 	return ret;
 }
-
+ 
 char*
 getbright(void)
 {
