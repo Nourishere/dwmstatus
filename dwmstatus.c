@@ -355,7 +355,7 @@ getwired(void)
 	free(co);
 	return ret;
 }
- 
+
 char*
 getbright(void)
 {
@@ -533,7 +533,7 @@ main(void)
 	for (;;sleep(1)) {
 		// very not portable code!
 		bat = getbattery();
-		tmcairo= mktimes("%H:%M:%S", tzcairo);
+		tmcairo= mktimes("%b %d, %H:%M:%S", tzcairo);
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
 		t1 = gettemperature("/sys/class/hwmon/hwmon6", "temp1_input");
 
@@ -545,7 +545,7 @@ main(void)
 		bright = getbright();
 		mem = getmem();
 
-		status = smprintf("NN | K:%s | CPU:%s | U:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
+		status = smprintf("nn | K:%s | CPU:%s | U:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
 				kbmap, cpu, mem, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
 		setstatus(status);
 
