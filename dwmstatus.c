@@ -5,6 +5,7 @@
  */
 
 #define _BSD_SOURCE
+#define NET_SWITCH_TIME 10
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -355,7 +356,7 @@ getwired(void)
 	free(co);
 	return ret;
 }
- 
+
 char*
 getbright(void)
 {
@@ -422,6 +423,41 @@ getcpu(void)
     usage = (int)((total_diff - idle_diff) * 100 / total_diff);
 
 	return smprintf("%.0f%%", (float)usage);
+}
+
+// Manage network interface display time.
+// If one is off, the other is permenant.
+// If both are on, they are switched between,
+// !! Depends on getwlan() and getwired()
+//
+// current - prev is the time at which switching happens. prev gets restored.
+char *
+choosenet(time_t * current, time_t * prev, int * state)
+{
+	char * eth = getwired();
+	char * wlan = getwlan();
+	char * ret;
+
+	if(difftime(*current, *prev) >= NET_SWITCH_TIME){
+		*state = !*state;
+		*prev = *current;
+	}
+	if(strcmp(eth, "down") != 0 && strcmp(wlan, "down") != 0){ // both are on
+		if(*state){ // favor eth
+			ret = smprintf("eth:%s", eth);
+		} else {
+			ret = smprintf("wlan:%s", wlan);
+		}
+	} else if (strcmp(eth, "down") != 0){ // favor wired
+		ret = smprintf("eth:%s", eth);
+	} else if (strcmp(wlan, "down") != 0){ // favor wlan
+		ret = smprintf("wlan:%s", wlan);
+	} else
+		ret = smprintf("down");
+
+	free(eth);
+	free(wlan);
+	return ret;
 }
 
 // Use mic for sink
@@ -516,8 +552,7 @@ main(void)
 	char *tmcairo;
 	char *t1;
 	char *kbmap;
-	char *wlan;
-	char *eth;
+	char *net;
 	char *cpu;
 	char *vol;
 	char *mic;
@@ -529,6 +564,9 @@ main(void)
 		return 1;
 	}
 
+	time_t start = time(NULL);
+	time_t current;
+	int state = 0;
 	// Update every second
 	for (;;sleep(1)) {
 		// very not portable code!
@@ -537,16 +575,16 @@ main(void)
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
 		t1 = gettemperature("/sys/class/hwmon/hwmon6", "temp1_input");
 
-		eth = getwired();
-		wlan = getwlan();
+		current = time(NULL);
+		net = choosenet(&current, &start, &state);
 		cpu = getcpu();
 		vol = getsound("speaker");
 		mic = getsound("mic");
 		bright = getbright();
 		mem = getmem();
 
-		status = smprintf("NN | K:%s | CPU:%s | U:%s | wlan:%s | eth:%s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
-				kbmap, cpu, mem, wlan, eth, mic, vol, bright, t1, bat, tmcairo);
+		status = smprintf("nn | K:%s | CPU:%s | U:%s | %s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
+				kbmap, cpu, mem, net, mic, vol, bright, t1, bat, tmcairo);
 		setstatus(status);
 
 		free(status);
@@ -554,8 +592,7 @@ main(void)
 		free(tmcairo);
 		free(t1);
 		free(kbmap);
-		free(wlan);
-		free(eth);
+		free(net);
 		free(cpu);
 		free(vol);
 		free(mic);
