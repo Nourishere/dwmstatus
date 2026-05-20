@@ -5,7 +5,7 @@
  */
 
 #define _BSD_SOURCE
-#define NET_SWITCH_TIME 10
+#define NET_SWITCH_TIME 20
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
