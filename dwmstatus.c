@@ -533,7 +533,7 @@ main(void)
 	for (;;sleep(1)) {
 		// very not portable code!
 		bat = getbattery();
-		tmcairo= mktimes("%b %d, %H:%M:%S", tzcairo);
+		tmcairo= mktimes("%a %b %d,%H:%M", tzcairo);
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
 		t1 = gettemperature("/sys/class/hwmon/hwmon6", "temp1_input");
 
