@@ -21,6 +21,7 @@
 
 #include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
+#include <nvml.h>
 
 char *tzcairo = "Africa/Cairo";
 
@@ -425,6 +426,67 @@ getcpu(void)
 	return smprintf("%.0f%%", (float)usage);
 }
 
+// Initialize the GPU (works only with NVIDIA drivers)
+// Not portable
+void
+initgpu(void)
+{
+    nvmlInit();
+}
+
+// Get the current workload of the GPU (works only for NVIDIA drivers)
+// NOTE: Needs CUDA libraries <nvml.h>
+char *
+getgpu(void)
+{
+    unsigned int deviceCount;
+    nvmlDeviceGetCount(&deviceCount);
+
+    if (deviceCount == 0) {
+        nvmlShutdown();
+        return smprintf("NA");
+    }
+
+    for (unsigned int i = 0; i < deviceCount; i++) {
+        nvmlDevice_t device;
+        nvmlDeviceGetHandleByIndex(i, &device);
+
+        nvmlUtilization_t utilization;
+        nvmlDeviceGetUtilizationRates(device, &utilization);
+
+        return smprintf("%u%%", utilization.gpu);
+    }
+
+    nvmlShutdown();
+    return 0;
+}
+
+// Get the current memory usage of the GPU (works only for NVIDIA drivers)
+// NOTE: Needs CUDA libraries <nvml.h>
+char *
+getgpumem(void)
+{
+    unsigned int deviceCount;
+    nvmlDeviceGetCount(&deviceCount);
+
+    if (deviceCount == 0) {
+        nvmlShutdown();
+        return smprintf("NA");
+    }
+
+    for (unsigned int i = 0; i < deviceCount; i++) {
+        nvmlDevice_t device;
+        nvmlDeviceGetHandleByIndex(i, &device);
+
+        nvmlUtilization_t utilization;
+        nvmlDeviceGetUtilizationRates(device, &utilization);
+
+        return smprintf("%u%%", utilization.memory);
+    }
+
+    nvmlShutdown();
+    return 0;
+}
 // Manage network interface display time.
 // If one is off, the other is permenant.
 // If both are on, they are switched between,
@@ -558,6 +620,8 @@ main(void)
 	char *mic;
 	char *bright;
 	char *mem;
+	char *gpu;
+	char *gpumem;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -567,6 +631,9 @@ main(void)
 	time_t start = time(NULL);
 	time_t current;
 	int state = 0;
+	// Initialize the GPU
+	initgpu();
+
 	// Update every second
 	for (;;sleep(1)) {
 		// very not portable code!
@@ -574,7 +641,8 @@ main(void)
 		tmcairo= mktimes("%a %b %d, %H:%M", tzcairo);
 		kbmap = execscript("setxkbmap -query | grep layout | cut -d':' -f 2- | tr -d ' '");
 		t1 = gettemperature("/sys/class/hwmon/hwmon6", "temp1_input");
-
+		gpu = getgpu();
+		gpumem = getgpumem();
 		current = time(NULL);
 		net = choosenet(&current, &start, &state);
 		cpu = getcpu();
@@ -583,8 +651,8 @@ main(void)
 		bright = getbright();
 		mem = getmem();
 
-		status = smprintf("nn | K:%s | CPU:%s | U:%s | %s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
-				kbmap, cpu, mem, net, mic, vol, bright, t1, bat, tmcairo);
+		status = smprintf("nn | K:%s | GPU:%s | GU:%s | CPU:%s | U:%s | %s | Mic:%s | Vol:%s | Bri:%s | T:%s | B:%s | %s ",
+				kbmap, gpu, gpumem, cpu, mem, net, mic, vol, bright, t1, bat, tmcairo);
 		setstatus(status);
 
 		free(status);
@@ -598,6 +666,8 @@ main(void)
 		free(mic);
 		free(bright);
 		free(mem);
+		free(gpu);
+		free(gpumem);
 	}
 
 	XCloseDisplay(dpy);

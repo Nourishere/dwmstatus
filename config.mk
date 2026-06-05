@@ -9,10 +9,10 @@ MANPREFIX = ${PREFIX}/share/man
 
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
-
+NVMLIB = /usr/local/cuda-13.0/targets/x86_64-linux/include
 # includes and libs
-INCS = -I. -I/usr/include -I${X11INC}
-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lasound
+INCS = -I. -I/usr/include -I${X11INC} -I${NVMLIB}
+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lasound -lnvidia-ml
 
 # flags
 CPPFLAGS = -DVERSION=\"${VERSION}\" -D_DEFAULT_SOURCE
